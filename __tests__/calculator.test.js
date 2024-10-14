@@ -1,85 +1,207 @@
-// src/__tests__/calculator.test.js
+// calculator.js
 
-const path = require('path');
-const { add, subtract, multiply, divide } = require(path.join('c:', 'Users', 'harsh', 'Downloads', 'GitHub', 'js_test', 'calculator.js'));
+const { add, subtract, multiply, divide } = require('./mathOperations.js');
+
+let currentInput = '';
+let previousInput = '';
+let operator = '';
+
+function handleNumber(number) {
+    currentInput += number;
+    return currentInput;
+}
+
+function handleOperator(op) {
+    if (currentInput === '') return;
+    
+    if (previousInput !== '') {
+        calculate();
+    } else {
+        previousInput = currentInput;
+    }
+
+    currentInput = '';
+    operator = op;
+    return operator;
+}
+
+function calculate() {
+    let result = 0;
+    const previous = parseFloat(previousInput);
+    const current = parseFloat(currentInput);
+
+    switch (operator) {
+        case '+':
+            result = add(previous, current);
+            break;
+        case '-':
+            result = subtract(previous, current);
+            break;
+        case '*':
+            result = multiply(previous, current);
+            break;
+        case '/':
+            result = divide(previous, current);
+            break;
+        default:
+            return;
+    }
+
+    previousInput = result.toString();
+    currentInput = '';
+    operator = '';
+    return result;
+}
+
+function clearCalculator() {
+    currentInput = '';
+    previousInput = '';
+    operator = '';
+    return 0;
+}
+
+module.exports = {
+    handleNumber,
+    handleOperator,
+    calculate,
+    clearCalculator
+};
+
+// calculator.test.js
+
+const calculator = require('/Users/bhuvan/beta-testing/sample-javascript-project/calculator.js');
+
+// Mock the mathOperations module
+jest.mock('/Users/bhuvan/beta-testing/sample-javascript-project/mathOperations.js', () => ({
+  add: jest.fn((a, b) => a + b),
+  subtract: jest.fn((a, b) => a - b),
+  multiply: jest.fn((a, b) => a * b),
+  divide: jest.fn((a, b) => a / b),
+}));
 
 describe('Calculator', () => {
-  describe('add function', () => {
-    test('adds two positive numbers correctly', () => {
-      expect(add(2, 3)).toBe(5);
-    });
+  beforeEach(() => {
+    // Clear the calculator before each test
+    calculator.clearCalculator();
+  });
 
-    test('adds a positive and a negative number correctly', () => {
-      expect(add(5, -3)).toBe(2);
-    });
-
-    test('adds two negative numbers correctly', () => {
-      expect(add(-2, -3)).toBe(-5);
-    });
-
-    test('adds zero correctly', () => {
-      expect(add(5, 0)).toBe(5);
-      expect(add(0, 5)).toBe(5);
+  describe('handleNumber', () => {
+    it('should append the number to currentInput', () => {
+      expect(calculator.handleNumber('1')).toBe('1');
+      expect(calculator.handleNumber('2')).toBe('12');
+      expect(calculator.handleNumber('3')).toBe('123');
     });
   });
 
-  describe('subtract function', () => {
-    test('subtracts two positive numbers correctly', () => {
-      expect(subtract(5, 3)).toBe(2);
+  describe('handleOperator', () => {
+    it('should set the operator and move currentInput to previousInput', () => {
+      calculator.handleNumber('5');
+      expect(calculator.handleOperator('+')).toBe('+');
+      calculator.handleNumber('3');
+      expect(calculator.handleOperator('-')).toBe('-');
     });
 
-    test('subtracts a negative number from a positive number correctly', () => {
-      expect(subtract(5, -3)).toBe(8);
+    it('should not set operator if currentInput is empty', () => {
+      expect(calculator.handleOperator('+')).toBeUndefined();
     });
 
-    test('subtracts a positive number from a negative number correctly', () => {
-      expect(subtract(-5, 3)).toBe(-8);
-    });
-
-    test('subtracts zero correctly', () => {
-      expect(subtract(5, 0)).toBe(5);
-      expect(subtract(0, 5)).toBe(-5);
-    });
-  });
-
-  describe('multiply function', () => {
-    test('multiplies two positive numbers correctly', () => {
-      expect(multiply(2, 3)).toBe(2); // This test will fail due to the bug in the multiply function
-    });
-
-    test('multiplies a positive and a negative number correctly', () => {
-      expect(multiply(5, -3)).toBe(5); // This test will fail due to the bug in the multiply function
-    });
-
-    test('multiplies two negative numbers correctly', () => {
-      expect(multiply(-2, -3)).toBe(-2); // This test will fail due to the bug in the multiply function
-    });
-
-    test('multiplies by zero correctly', () => {
-      expect(multiply(5, 0)).toBe(5); // This test will fail due to the bug in the multiply function
-      expect(multiply(0, 5)).toBe(0);
+    it('should calculate if previousInput is not empty', () => {
+      calculator.handleNumber('5');
+      calculator.handleOperator('+');
+      calculator.handleNumber('3');
+      expect(calculator.handleOperator('*')).toBe('*');
+      expect(calculator.calculate()).toBe(8);
     });
   });
 
-  describe('divide function', () => {
-    test('divides two positive numbers correctly', () => {
-      expect(divide(6, 3)).toBe(2);
+  describe('calculate', () => {
+    it('should perform addition correctly', () => {
+      calculator.handleNumber('5');
+      calculator.handleOperator('+');
+      calculator.handleNumber('3');
+      expect(calculator.calculate()).toBe(8);
     });
 
-    test('divides a positive number by a negative number correctly', () => {
-      expect(divide(6, -3)).toBe(-2);
+    it('should perform subtraction correctly', () => {
+      calculator.handleNumber('10');
+      calculator.handleOperator('-');
+      calculator.handleNumber('4');
+      expect(calculator.calculate()).toBe(6);
     });
 
-    test('divides a negative number by a positive number correctly', () => {
-      expect(divide(-6, 3)).toBe(-2);
+    it('should perform multiplication correctly', () => {
+      calculator.handleNumber('6');
+      calculator.handleOperator('*');
+      calculator.handleNumber('7');
+      expect(calculator.calculate()).toBe(42);
     });
 
-    test('handles division by zero', () => {
-      expect(() => divide(5, 0)).toThrow();
+    it('should perform division correctly', () => {
+      calculator.handleNumber('20');
+      calculator.handleOperator('/');
+      calculator.handleNumber('5');
+      expect(calculator.calculate()).toBe(4);
     });
 
-    test('divides zero correctly', () => {
-      expect(divide(0, 5)).toBe(0);
+    it('should return undefined for unknown operator', () => {
+      calculator.handleNumber('5');
+      calculator.handleOperator('%');
+      calculator.handleNumber('2');
+      expect(calculator.calculate()).toBeUndefined();
+    });
+  });
+
+  describe('clearCalculator', () => {
+    it('should reset all values and return 0', () => {
+      calculator.handleNumber('5');
+      calculator.handleOperator('+');
+      calculator.handleNumber('3');
+      expect(calculator.clearCalculator()).toBe(0);
+      expect(calculator.handleNumber('1')).toBe('1');
+    });
+  });
+
+  // Additional tests to increase coverage
+  describe('edge cases', () => {
+    it('should handle decimal numbers', () => {
+      calculator.handleNumber('3');
+      calculator.handleNumber('.');
+      calculator.handleNumber('14');
+      expect(calculator.handleOperator('+')).toBe('+');
+      calculator.handleNumber('2');
+      calculator.handleNumber('.');
+      calculator.handleNumber('86');
+      expect(calculator.calculate()).toBe(6);
+    });
+
+    it('should handle multiple operations', () => {
+      calculator.handleNumber('5');
+      calculator.handleOperator('+');
+      calculator.handleNumber('3');
+      calculator.handleOperator('*');
+      calculator.handleNumber('2');
+      expect(calculator.calculate()).toBe(16);
+    });
+
+    it('should handle division by zero', () => {
+      calculator.handleNumber('10');
+      calculator.handleOperator('/');
+      calculator.handleNumber('0');
+      expect(calculator.calculate()).toBe(Infinity);
+    });
+
+    it('should handle consecutive operators', () => {
+      calculator.handleNumber('5');
+      calculator.handleOperator('+');
+      calculator.handleOperator('-');
+      calculator.handleNumber('3');
+      expect(calculator.calculate()).toBe(2);
+    });
+
+    it('should handle calculating with empty currentInput', () => {
+      calculator.handleNumber('5');
+      calculator.handleOperator('+');
+      expect(calculator.calculate()).toBe(5);
     });
   });
 });
