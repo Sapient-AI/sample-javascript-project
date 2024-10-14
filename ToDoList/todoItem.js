@@ -1,5 +1,5 @@
 // Exported class for individual todo item
-export class TodoItem {
+class TodoItem {
     constructor(description) {
         this.description = description;
         this.completed = false;

@@ -1,5 +1,5 @@
 // Exported class for managing the todo list
-export class TodoList {
+class TodoList {
     constructor() {
         this.todos = [];
     }
